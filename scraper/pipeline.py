@@ -1,6 +1,7 @@
 import time
 
 from .details import get_announcement_details
+from .graphql.client import OuedknissClient
 from .parser import parse_announcement
 
 
@@ -8,11 +9,11 @@ MAX_RETRIES = 3
 RETRY_DELAY = 2
 
 
-def fetch_details_with_retry(announcement_id):
+def fetch_details_with_retry(announcement_id, client):
     for attempt in range(1, MAX_RETRIES + 1):
 
         try:
-            details = get_announcement_details(announcement_id)
+            details = get_announcement_details(announcement_id, client=client)
 
             if not details:
                 raise ValueError("Empty response")
@@ -36,14 +37,17 @@ def fetch_details_with_retry(announcement_id):
     return None
 
 
-def scrape_page(category_slug, page=1, count=48):
+def scrape_page(category_slug, page=1, count=48, client=None):
 
     from .search import search_announcements
+
+    client = client or OuedknissClient()
 
     result = search_announcements(
         category_slug=category_slug,
         page=page,
-        count=count
+        count=count,
+        client=client,
     )
 
     announcements = result["search"]["announcements"]
@@ -66,7 +70,8 @@ def scrape_page(category_slug, page=1, count=48):
         )
 
         details = fetch_details_with_retry(
-            announcement_id
+            announcement_id,
+            client=client,
         )
 
         if details is None:
@@ -96,13 +101,16 @@ def scrape_page(category_slug, page=1, count=48):
         "errors": errors
     }
     
-def scrape_category(category_slug, max_pages=3, count=48):
+def scrape_category(category_slug, max_pages=None, count=48, client=None):
 
     unique_announcements = {}
     all_errors = []
     duplicates = 0
+    client = client or OuedknissClient()
 
-    for page in range(1, max_pages + 1):
+    page = 1
+
+    while max_pages is None or page <= max_pages:
 
         print()
         print("=" * 50)
@@ -113,11 +121,13 @@ def scrape_category(category_slug, max_pages=3, count=48):
             result = scrape_page(
                 category_slug=category_slug,
                 page=page,
-                count=count
+                count=count,
+                client=client,
             )
 
         except Exception as error:
-            print(f"✗ Error on page {page}: {error}")
+            print(f" Error on page {page}: {error}")
+            page += 1
             continue
 
         for announcement in result["data"]:
@@ -139,8 +149,10 @@ def scrape_category(category_slug, max_pages=3, count=48):
         )
 
         if not pagination["hasMorePages"]:
-            print("✓ Dernière page atteinte.")
+            print(" Dernière page atteinte.")
             break
+
+        page += 1
 
     return {
         "data": list(unique_announcements.values()),

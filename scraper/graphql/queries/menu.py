@@ -18,6 +18,32 @@ query listingMenu($menuFilter: MenuFilterInput) {
         active
         rank
         delivery
+        deliveryType
+        isWithoutExchange
+        priceUnits
+        children {
+          id
+          name
+          slug
+          icon
+          active
+          rank
+          __typename
+        }
+        parent {
+          id
+          name
+          slug
+          icon
+          __typename
+        }
+        parentTree {
+          id
+          name
+          slug
+          icon
+          __typename
+        }
         __typename
       }
     }

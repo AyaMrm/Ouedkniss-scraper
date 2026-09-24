@@ -1,63 +1,9 @@
 from .graphql.client import OuedknissClient
+from .graphql.queries.search import SEARCH_ANNOUNCEMENTS_QUERY
 
 
-SEARCH_QUERY = """
-query SearchAnnouncementsQuery(
-    $q: String,
-    $filter: SearchFilterInput,
-    $mediaSize: MediaSize = MEDIUM
-) {
-    search(q: $q, filter: $filter) {
-        announcements {
-            data {
-                id
-                title
-                slug
-                createdAt: refreshedAt
-                price
-                pricePreview
-                priceUnit
-                oldPrice
-                oldPricePreview
-                priceType
-                exchangeType
-
-                cities {
-                    id
-                    name
-                    slug
-                    region {
-                        id
-                        name
-                        slug
-                    }
-                }
-
-                defaultMedia(size: $mediaSize) {
-                    mediaUrl
-                    mimeType
-                    thumbnail
-                }
-
-                category {
-                    id
-                    slug
-                    deliveryType
-                }
-            }
-
-            paginatorInfo {
-                lastPage
-                hasMorePages
-            }
-        }
-    }
-}
-"""
-
-
-def search_announcements(category_slug, page=1, count=48):
-    client = OuedknissClient()
+def search_announcements(category_slug, page=1, count=48, client=None):
+    client = client or OuedknissClient()
 
     variables = {
         "q": None,
@@ -83,7 +29,7 @@ def search_announcements(category_slug, page=1, count=48):
     }
 
     return client.execute(
-        query=SEARCH_QUERY,
+        query=SEARCH_ANNOUNCEMENTS_QUERY,
         variables=variables,
         operation_name="SearchAnnouncementsQuery"
     )
