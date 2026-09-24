@@ -6,7 +6,7 @@ def get_announcement_details(announcement_id, client=None):
     client = client or OuedknissClient()
 
     result = client.execute(
-        query=DETAILS_QUERY,
+        query=ANNOUNCEMENT_DETAILS_QUERY,
         variables={
             "id": str(announcement_id)
         },
